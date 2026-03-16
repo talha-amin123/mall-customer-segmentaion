@@ -11,7 +11,7 @@ The analysis combines **Principal Component Analysis (PCA)** and **K-Means clust
 - [Installation](#installation)
 - [Usage](#usage)
 - [Features](#features)
-- [Results](#Results-and-Insights)
+- [Results and Insights](#Results-and-Insights)
 - [License](#license)
 
 ## Project Overview
