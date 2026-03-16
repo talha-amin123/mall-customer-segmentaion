@@ -12,7 +12,7 @@ from src.data_loader import load_data, get_data_info
 from src.preprocessing import preprocess_data
 from src.pca_analysis import perform_pca_analysis, apply_pca, get_pca_loadings
 from src.clustering import find_optimal_clusters, perform_clustering
-from src.analysis import get_cluster_summary, interpret_clusters
+from src.analysis import get_cluster_summary, get_cluster_ranges, interpret_clusters
 
 
 def plot_combined_analysis(explained_variance, wcss, clustered_pca_df):
@@ -151,19 +151,28 @@ def main():
     # ===== STEP 9: Analysis and Interpretation =====
     print("[STEP 9] Analyzing Clusters...")
     cluster_summary = get_cluster_summary(data, clusters)
-    print("\nCluster Summary Statistics:")
+    cluster_ranges = get_cluster_ranges(data, clusters)
+    
+    print("\nCluster Summary Statistics (Mean Values):")
     print(cluster_summary)
     print("\n")
     
+    print("Cluster Ranges (Min - Max Values):")
+    print(cluster_ranges)
+    print("\n")
+    
     # Get interpretations
-    interpretations = interpret_clusters(cluster_summary)
+    interpretations = interpret_clusters(cluster_summary, cluster_ranges)
     print("CLUSTER PROFILES:")
     print("-" * 80)
     for cluster_id, info in interpretations.items():
         print(f"\nCluster {cluster_id}: {info['profile']}")
         print(f"  - Average Age: {info['avg_age']} years")
+        print(f"    Range: {info['age_range'][0]} - {info['age_range'][1]} years")
         print(f"  - Average Annual Income: ${info['avg_income']:.1f}k")
+        print(f"    Range: ${info['income_range'][0]:.1f}k - ${info['income_range'][1]:.1f}k")
         print(f"  - Average Spending Score: {info['avg_spending_score']:.1f}/100")
+        print(f"    Range: {info['spending_range'][0]} - {info['spending_range'][1]}/100")
     
     # ===== STEP 10: Final Output =====
     print("\n" + "="*80)
@@ -179,6 +188,7 @@ def main():
         'kmeans': kmeans,
         'clusters': clusters,
         'summary': cluster_summary,
+        'ranges': cluster_ranges,
         'interpretations': interpretations
     }
 

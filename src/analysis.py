@@ -69,12 +69,41 @@ def get_cluster_summary(original_data: pd.DataFrame, cluster_labels: list) -> pd
     return summary
 
 
-def interpret_clusters(summary: pd.DataFrame) -> dict:
+def get_cluster_ranges(original_data: pd.DataFrame, cluster_labels: list) -> pd.DataFrame:
+    """
+    Calculate min and max ranges for numerical features by cluster
+    
+    Args:
+        original_data (pd.DataFrame): Original customer data
+        cluster_labels (list): Cluster assignments
+        
+    Returns:
+        pd.DataFrame: Min and max values of features by cluster
+    """
+    data_with_clusters = original_data.copy()
+    data_with_clusters['Cluster'] = cluster_labels
+    
+    numerical_features = ['Age', 'Annual Income (k$)', 'Spending Score (1-100)']
+    
+    # Calculate min and max for each feature by cluster
+    range_stats = pd.DataFrame()
+    for feature in numerical_features:
+        min_vals = data_with_clusters.groupby('Cluster')[feature].min()
+        max_vals = data_with_clusters.groupby('Cluster')[feature].max()
+        
+        range_stats[f'{feature} (Min)'] = min_vals
+        range_stats[f'{feature} (Max)'] = max_vals
+    
+    return range_stats
+
+
+def interpret_clusters(summary: pd.DataFrame, ranges: pd.DataFrame = None) -> dict:
     """
     Generate interpretations of each cluster based on statistics
     
     Args:
         summary (pd.DataFrame): Cluster summary statistics
+        ranges (pd.DataFrame): Min/max ranges for features by cluster (optional)
         
     Returns:
         dict: Interpretations for each cluster
@@ -100,11 +129,22 @@ def interpret_clusters(summary: pd.DataFrame) -> dict:
         else:
             profile = "Moderate Customer (Average Income and Spending)"
         
-        interpretations[cluster_id] = {
+        interpretation = {
             'profile': profile,
             'avg_age': round(age, 2),
             'avg_income': round(income, 2),
             'avg_spending_score': round(spending, 2)
         }
+        
+        # Add ranges if provided
+        if ranges is not None and cluster_id in ranges.index:
+            range_data = ranges.loc[cluster_id]
+            interpretation['age_range'] = (int(range_data['Age (Min)']), int(range_data['Age (Max)']))
+            interpretation['income_range'] = (round(range_data['Annual Income (k$) (Min)'], 1), 
+                                             round(range_data['Annual Income (k$) (Max)'], 1))
+            interpretation['spending_range'] = (int(range_data['Spending Score (1-100) (Min)']), 
+                                               int(range_data['Spending Score (1-100) (Max)']))
+        
+        interpretations[cluster_id] = interpretation
     
     return interpretations
