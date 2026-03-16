@@ -15,7 +15,7 @@ from src.clustering import find_optimal_clusters, perform_clustering
 from src.analysis import get_cluster_summary, get_cluster_ranges, interpret_clusters
 
 
-def plot_combined_analysis(explained_variance, wcss, clustered_pca_df):
+def plot_combined_analysis(explained_variance, wcss, clustered_pca_df, interpretations=None):
     """
     Create a combined figure with all analysis plots in a 2x2 grid
     
@@ -25,7 +25,7 @@ def plot_combined_analysis(explained_variance, wcss, clustered_pca_df):
         clustered_pca_df (pd.DataFrame): PCA data with cluster assignments
     """
     fig = plt.figure(figsize=(16, 12))
-    fig.suptitle('Mall Customer Segmentation Analysis - Complete Results', 
+    fig.suptitle('Mall Customer Segmentation Analysis', 
                  fontsize=18, fontweight='bold', y=0.995)
     
     # Create 2x2 grid
@@ -61,12 +61,17 @@ def plot_combined_analysis(explained_variance, wcss, clustered_pca_df):
     colors = ['#FF6B6B', '#4ECDC4', '#45B7D1']
     for cluster in sorted(clustered_pca_df['Cluster'].unique()):
         cluster_data = clustered_pca_df[clustered_pca_df['Cluster'] == cluster]
+        # Use profile name if interpretations available, otherwise use cluster number
+        if interpretations and cluster in interpretations:
+            label = f"C{cluster}: {interpretations[cluster]['profile']}"
+        else:
+            label = f'Cluster {cluster}'
         ax3.scatter(cluster_data['Principal Component 1'],
                    cluster_data['Principal Component 2'],
-                   label=f'Cluster {cluster}',
+                   label=label,
                    s=150, alpha=0.7, color=colors[cluster], edgecolors='black', linewidth=0.5)
-    ax3.set_xlabel('Principal Component 1', fontsize=12, fontweight='bold')
-    ax3.set_ylabel('Principal Component 2', fontsize=12, fontweight='bold')
+    ax3.set_xlabel('Principal Component 1 (Income)', fontsize=12, fontweight='bold')
+    ax3.set_ylabel('Principal Component 2 (Age vs Spending)', fontsize=12, fontweight='bold')
     ax3.set_title('Customer Segmentation using K-Means Clustering', 
                   fontsize=13, fontweight='bold', pad=10)
     ax3.legend(fontsize=11, loc='best')
@@ -152,6 +157,12 @@ def main():
     print("[STEP 9] Analyzing Clusters...")
     cluster_summary = get_cluster_summary(data, clusters)
     cluster_ranges = get_cluster_ranges(data, clusters)
+    interpretations = interpret_clusters(cluster_summary, cluster_ranges)
+    
+    # ===== STEP 9: Display Combined Analysis Plots =====
+    print("\n[STEP 9] Generating Combined Analysis Plots...")
+    plot_combined_analysis(explained_variance, wcss, clustered_pca_df, interpretations)
+    print("✓ Plots displayed successfully - Execution continuing...\n")
     
     print("\nCluster Summary Statistics (Mean Values):")
     print(cluster_summary)
